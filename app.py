@@ -215,7 +215,7 @@ def dibujar_certificado(tipo, nombre, dni, fecha):
     draw = ImageDraw.Draw(img)
 
     f_nombre = cargar_fuente("LiberationSerif-Bold.ttf", 42, "timesbd.ttf")
-    f_regular = cargar_fuente("LiberationSerif-Regular.ttf", 40, "times.ttf")
+    f_regular = cargar_fuente("DejaVuSerif.ttf", 40, "times.ttf")
     f_negrita = cargar_fuente("LiberationSerif-Bold.ttf", 40, "timesbd.ttf")
     f_fecha = cargar_fuente("LiberationSerif-Bold.ttf", 46, "timesbd.ttf")
 
