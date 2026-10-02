@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Panel · Certificados{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <span class="eyebrow">SISTEMA LOCAL</span>
+    <h1>Certificados de Educación Vial</h1>
+    <p>Generá un certificado en segundos. Solo elegí el curso, cargá los datos y descargá el PDF.</p>
+  </div>
+  <a class="primary big" href="{{ url_for('nuevo_certificado') }}">+ Generar certificado</a>
+</section>
+
+<section class="stats">
+  <div class="stat"><span>Total generados</span><strong>{{ total }}</strong></div>
+  <div class="stat"><span>Cursos disponibles</span><strong>3</strong></div>
+  <div class="stat"><span>Formato</span><strong>PDF</strong></div>
+</section>
+
+<section class="section-head">
+  <div>
+    <h2>Últimos certificados</h2>
+    <p>Historial de los certificados generados desde este equipo.</p>
+  </div>
+</section>
+
+{% if certificados %}
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>Persona</th><th>DNI</th><th>Curso</th><th>Fecha</th><th>Generado</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for c in certificados %}
+    <tr>
+      <td data-label="Persona"><strong>{{ c.nombre }}</strong></td>
+      <td data-label="DNI">{{ c.dni }}</td>
+      <td data-label="Curso"><span class="badge badge-{{ c.tipo }}">{{ c.tipo_nombre }}</span></td>
+      <td data-label="Fecha">{{ c.fecha }}</td>
+      <td data-label="Generado">{{ c.created_at|fecha_hora }}</td>
+      <td class="actions" data-label="Acciones">
+        <a class="secondary" href="{{ url_for('ver_certificado', cid=c.id) }}" target="_blank">Ver PDF</a>
+        <a class="secondary" href="{{ url_for('descargar_certificado', cid=c.id) }}">Descargar</a>
+        <form method="post" action="{{ url_for('eliminar_certificado', cid=c.id) }}" onsubmit="return confirm('¿Eliminar este registro?')">
+          <button class="danger" type="submit">Eliminar</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="empty">
+  <div class="empty-icon">PDF</div>
+  <h3>Todavía no hay certificados</h3>
+  <p>El primer certificado lo podés generar desde el botón de arriba.</p>
+  <a class="primary" href="{{ url_for('nuevo_certificado') }}">Generar el primero</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Nuevo certificado · Certificados{% endblock %}
+{% block content %}
+<div class="form-page">
+  <a class="back" href="{{ url_for('index') }}">← Volver al panel</a>
+  <div class="form-card">
+    <div class="form-title">
+      <span class="eyebrow">NUEVO CERTIFICADO</span>
+      <h1>Completar datos</h1>
+      <p>Los datos se colocan automáticamente sobre el diseño original del certificado.</p>
+    </div>
+
+    <form method="post" id="certForm">
+      <label>Curso</label>
+      <div class="course-grid">
+        {% for value, label in tipos %}
+        <label class="course-option">
+          <input type="radio" name="tipo" value="{{ value }}" {% if loop.first %}checked{% endif %}>
+          <span class="course-card">
+            <strong>{{ label }}</strong>
+            <small>
+              {% if value == 'estrella' %}Estrellas Amarillas
+              {% elif value == 'auto' %}Primera vez Auto
+              {% else %}Primera vez Moto{% endif %}
+            </small>
+          </span>
+        </label>
+        {% endfor %}
+      </div>
+
+      <div class="fields two">
+        <div>
+          <label for="nombre">Nombre completo</label>
+          <input id="nombre" name="nombre" type="text" placeholder="Ej. Cesar Maximiliano Caliva" autocomplete="name" required autofocus>
+        </div>
+        <div>
+          <label for="dni">DNI</label>
+          <input id="dni" name="dni" type="text" inputmode="numeric" placeholder="Ej. 34029777" required>
+        </div>
+      </div>
+
+      <div class="fields one">
+        <div>
+          <label for="fecha">Fecha</label>
+          <input id="fecha" name="fecha" type="text" value="{{ fecha_hoy }}" placeholder="DD-MM-AAAA" pattern="\d{2}-\d{2}-\d{4}" required>
+          <small class="hint">Formato: DD-MM-AAAA</small>
+        </div>
+      </div>
+
+      <label class="toggle-all">
+        <input type="checkbox" name="generar_todos" value="1" id="chkTodos">
+        <span>
+          <strong>Generar los 3 cursos a la vez</strong>
+          <small>Descarga un solo PDF de 3 páginas (Estrellas Amarillas, Primera vez Auto y Primera vez Moto)</small>
+        </span>
+      </label>
+
+      <div class="form-actions">
+        <a class="secondary large" href="{{ url_for('index') }}">Cancelar</a>
+        <button class="primary large" type="submit">Generar y descargar PDF</button>
+      </div>
+    </form>
+    <script>
+      const chk = document.getElementById('chkTodos');
+      chk.addEventListener('change', () => {
+        document.querySelectorAll('input[name="tipo"]').forEach(r => {
+          r.disabled = chk.checked;
+          r.closest('.course-option').style.opacity = chk.checked ? 0.4 : 1;
+        });
+      });
+    </script>
+  </div>
+</div>
+{% endblock %}
