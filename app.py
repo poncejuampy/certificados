@@ -177,20 +177,12 @@ def cargar_fuente(preferida, size, windows=None):
 def borrar_texto_viejo(img, y0, y1):
     """Blanquea SOLO la tinta oscura (el texto anterior) preservando el diseño:
     marca de agua, líneas curvas y el marco dorado quedan intactos."""
-    # x de 100 a 1654: dentro del marco dorado (el marco queda 100% fuera de alcance)
-    region = img.crop((100, y0, 1654, y1))
-    gray = region.convert("L")
-    # núcleo de tinta negra (umbral 120: el dorado del marco tiene 141.7, queda afuera)
-    nucleo = gray.point(lambda p: 255 if p < 120 else 0)
-    # dilatación mínima (1px) para cubrir el antialias del texto viejo
-    mascara = nucleo.filter(ImageFilter.MaxFilter(3))
-    # solo blanquear píxeles realmente oscuros o grises (<210);
-    # las curvas claras (~230) y la marca de agua quedan intactas aunque toquen el texto
-    oscuros = gray.point(lambda p: 255 if p < 210 else 0)
-    vacia = Image.new("L", region.size, 0)
-    mascara = Image.composite(mascara, vacia, oscuros)
+    x0, x1 = 100, 1654
+    region = img.crop((x0, y0, x1, y1)).convert("L")
+    mascara = region.point(lambda pixel: 255 if pixel < 150 else 0)
+    mascara = mascara.filter(ImageFilter.MaxFilter(5))
     blanco = Image.new("RGB", region.size, "white")
-    img.paste(blanco, (100, y0), mascara)
+    img.paste(blanco, (x0, y0), mascara)
 
 
 def dibujar_linea(draw, segmentos, y_tinta):
