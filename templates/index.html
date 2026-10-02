@@ -43,6 +43,7 @@
         <a class="secondary" href="{{ url_for('ver_certificado', cid=c.id) }}" target="_blank">Ver PDF</a>
         <a class="secondary" href="{{ url_for('descargar_certificado', cid=c.id) }}">Descargar</a>
         <form method="post" action="{{ url_for('eliminar_certificado', cid=c.id) }}" onsubmit="return confirm('¿Eliminar este registro?')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <button class="danger" type="submit">Eliminar</button>
         </form>
       </td>

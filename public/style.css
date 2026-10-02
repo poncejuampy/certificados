@@ -1,4 +1,4 @@
-:root {
+:root{
   color-scheme: light;
   font-family: Inter, "Segoe UI", Arial, sans-serif;
   color: #17202a;
@@ -348,6 +348,19 @@ tr:last-child td {
   margin: auto;
 }
 
+.login-page {
+  max-width: 500px;
+  margin: 6vh auto;
+}
+
+.login-card {
+  box-shadow: 0 12px 36px #0f172a0c;
+}
+
+.login-submit {
+  width: 100%;
+}
+
 .back {
   min-height: 44px;
   margin-bottom: 8px;
@@ -615,10 +628,21 @@ footer {
 
   .header-inner nav {
     flex: 1 0 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .header-inner nav form {
+    min-width: 0;
+    margin: 0;
+  }
+
+  .header-inner nav form button {
+    width: 100%;
   }
 
   .header-inner nav .nav-button {
-    width: 100%;
+    width: auto;
   }
 
   .header-inner nav a.active {

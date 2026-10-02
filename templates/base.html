@@ -4,9 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Certificados Educación Vial{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+{% if request.endpoint != 'login' %}
 <header class="site-header">
   <div class="header-inner">
     <a class="brand" href="{{ url_for('index') }}">
@@ -19,9 +20,14 @@
     <nav>
       <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Panel</a>
       <a class="nav-button" href="{{ url_for('nuevo_certificado') }}">+ Nuevo certificado</a>
+      <form method="post" action="{{ url_for('logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="secondary" type="submit">Cerrar sesión</button>
+      </form>
     </nav>
   </div>
 </header>
+{% endif %}
 
 <main class="main">
   {% with messages = get_flashed_messages(with_categories=true) %}

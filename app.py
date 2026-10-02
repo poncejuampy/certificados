@@ -1,9 +1,13 @@
 import io
+import hmac
+import os
 import re
+import secrets
+import tempfile
 from datetime import datetime
 from pathlib import Path
 
-from flask import Flask, flash, redirect, render_template, request, send_file, url_for
+from flask import Flask, abort, flash, redirect, render_template, request, send_file, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
@@ -38,8 +42,18 @@ BANDAS = {
 }
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "certificados-vial-2026"
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{BASE_DIR / 'instance' / 'certificados.db'}"
+IS_VERCEL = os.environ.get("VERCEL") == "1"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or (
+    None if IS_VERCEL else secrets.token_hex(32)
+)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SECURE"] = IS_VERCEL
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+DB_PATH = (
+    Path(tempfile.gettempdir()) / "certificados.db"
+    if IS_VERCEL else BASE_DIR / "instance" / "certificados.db"
+)
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
@@ -60,6 +74,75 @@ class Certificado(db.Model):
     @property
     def tipo_nombre(self):
         return dict(TIPOS).get(self.tipo, self.tipo)
+
+
+def credenciales_configuradas():
+    return all(
+        os.environ.get(name, "").strip()
+        for name in ("SECRET_KEY", "ADMIN_EMAIL", "ADMIN_PHONE", "ADMIN_PASSWORD")
+    )
+
+
+@app.context_processor
+def contexto_csrf():
+    return {"csrf_token": lambda: session.setdefault("csrf_token", secrets.token_urlsafe(32))}
+
+
+@app.before_request
+def proteger_aplicacion():
+    auth_enabled = credenciales_configuradas()
+    if IS_VERCEL and not auth_enabled:
+        return "Falta configurar el acceso de administrador en las variables de entorno.", 503
+
+    if auth_enabled and request.method == "POST":
+        token = request.form.get("csrf_token", "")
+        expected = session.get("csrf_token", "")
+        if not token or not expected or not hmac.compare_digest(token, expected):
+            abort(400, description="La sesión expiró o el formulario no es válido. Volvé a cargar la página.")
+
+    if not auth_enabled or request.endpoint in ("login", "static"):
+        return None
+    if not session.get("admin_authenticated"):
+        return redirect(url_for("login", next=request.path))
+    return None
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not credenciales_configuradas():
+        return "El acceso de administrador no está configurado.", 503
+    if session.get("admin_authenticated"):
+        return redirect(url_for("index"))
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().casefold()
+        phone = re.sub(r"\D", "", request.form.get("phone", ""))
+        password = request.form.get("password", "")
+        admin_email = os.environ["ADMIN_EMAIL"].strip().casefold()
+        admin_phone = re.sub(r"\D", "", os.environ["ADMIN_PHONE"])
+        admin_password = os.environ["ADMIN_PASSWORD"]
+
+        valid_email = hmac.compare_digest(email, admin_email)
+        valid_phone = hmac.compare_digest(phone, admin_phone)
+        valid_password = hmac.compare_digest(password, admin_password)
+        valid = valid_email and valid_phone and valid_password
+        if valid:
+            destination = request.args.get("next", "")
+            session.clear()
+            session["admin_authenticated"] = True
+            session["csrf_token"] = secrets.token_urlsafe(32)
+            if destination.startswith("/") and not destination.startswith("//"):
+                return redirect(destination)
+            return redirect(url_for("index"))
+
+        flash("El correo, celular o contraseña no son correctos.", "error")
+    return render_template("login.html")
+
+
+@app.post("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 
 def _buscar_fuente(nombre):
@@ -279,13 +362,16 @@ def fecha_hora(value):
 
 
 def inicializar():
-    (BASE_DIR / "instance").mkdir(exist_ok=True)
+    if not IS_VERCEL:
+        (BASE_DIR / "instance").mkdir(exist_ok=True)
     with app.app_context():
         db.create_all()
 
 
+inicializar()
+
+
 if __name__ == "__main__":
-    inicializar()
     print("Sistema de Certificados Educación Vial")
     print("Abrí http://localhost:5000")
     app.run(host="127.0.0.1", port=5000, debug=False)
