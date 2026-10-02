@@ -11,6 +11,7 @@
     </div>
 
     <form method="post" id="certForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>Curso</label>
       <div class="course-grid">
         {% for value, label in tipos %}

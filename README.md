@@ -10,6 +10,7 @@ Versión web local del generador de certificados.
 - Guarda un historial local en SQLite.
 - Desde el panel podés volver a abrir, descargar o eliminar certificados.
 - El despliegue en Vercel exige iniciar sesión con un único usuario administrador.
+- El administrador puede ingresar con el correo o el celular configurado, y su contraseña.
 
 ## Instalación
 

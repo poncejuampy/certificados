@@ -83,6 +83,15 @@ def credenciales_configuradas():
     )
 
 
+def normalizar_telefono(valor):
+    digitos = re.sub(r"\D", "", valor)
+    if digitos.startswith("549") and len(digitos) > 10:
+        return digitos[3:]
+    if digitos.startswith("54") and len(digitos) > 10:
+        return digitos[2:]
+    return digitos
+
+
 @app.context_processor
 def contexto_csrf():
     return {"csrf_token": lambda: session.setdefault("csrf_token", secrets.token_urlsafe(32))}
@@ -115,17 +124,18 @@ def login():
         return redirect(url_for("index"))
 
     if request.method == "POST":
-        email = request.form.get("email", "").strip().casefold()
-        phone = re.sub(r"\D", "", request.form.get("phone", ""))
+        identifier = request.form.get("identifier", "").strip()
         password = request.form.get("password", "")
         admin_email = os.environ["ADMIN_EMAIL"].strip().casefold()
-        admin_phone = re.sub(r"\D", "", os.environ["ADMIN_PHONE"])
+        admin_phone = normalizar_telefono(os.environ["ADMIN_PHONE"])
         admin_password = os.environ["ADMIN_PASSWORD"]
 
-        valid_email = hmac.compare_digest(email, admin_email)
-        valid_phone = hmac.compare_digest(phone, admin_phone)
+        valid_email = hmac.compare_digest(identifier.casefold(), admin_email)
+        valid_phone = hmac.compare_digest(
+            normalizar_telefono(identifier), admin_phone
+        )
         valid_password = hmac.compare_digest(password, admin_password)
-        valid = valid_email and valid_phone and valid_password
+        valid = (valid_email or valid_phone) and valid_password
         if valid:
             destination = request.args.get("next", "")
             session.clear()
